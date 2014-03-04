@@ -44,6 +44,7 @@ import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import upmc.ping.Utils.ImageUtils;
+import javax.swing.JTabbedPane;
 
 public class MainUI {
 	private final int WIDTH = 1024;
@@ -59,9 +60,11 @@ public class MainUI {
 	// QUEQUELS COMPOSENTS 
 	private JFrame frmMapEditor;
 	private JPanel mainPanel;
+	private JPanel previewPanel;
 	private JLabel canvasLabel;
-	private JScrollPane scrollPane;
+	private JLabel previewLabel;
 	private JLabel lblValue;
+	private JScrollPane scrollPane;
 	
 	// Garder le heighmap sous forme blackgray
 	private BufferedImage srcHeightMap;
@@ -78,6 +81,11 @@ public class MainUI {
 	private Graphics2D gMain;
 	private Graphics2D gHeightMap;
 	private Graphics2D gTexture;
+	private Graphics2D gTmp;
+	
+	private boolean isShowEnvironment = true;
+	private boolean isShowRoad = true;
+	private boolean isShowObject = true;
 	
 	private double value = 50;
 	private int currentX, currentY, oldX, oldY;
@@ -155,8 +163,15 @@ public class MainUI {
 		mnHelp.add(mntmAbout);
 		frmMapEditor.getContentPane().setLayout(new BorderLayout(0, 0));
 		
+		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+		frmMapEditor.getContentPane().add(tabbedPane, BorderLayout.CENTER);
+		
+		JPanel panelDesign = new JPanel();
+		tabbedPane.addTab("Map Design", null, panelDesign, null);
+		panelDesign.setLayout(new BorderLayout(0, 0));
+		
 		scrollPane = new JScrollPane();
-		frmMapEditor.getContentPane().add(scrollPane, BorderLayout.CENTER);
+		panelDesign.add(scrollPane, BorderLayout.CENTER);
 		scrollPane.setBounds(new Rectangle(0, 0, 200, 200));
 		
 		mainPanel = new JPanel(new GridBagLayout());
@@ -165,10 +180,24 @@ public class MainUI {
 		
 		canvasLabel = new JLabel(new ImageIcon(canvasMain));
 		mainPanel.add(canvasLabel, null);
-
+		canvasLabel.addMouseListener(new MouseAdapter() {
+	        public void mousePressed(MouseEvent event) {
+	            jPanelMousePressed(event);
+	        }
+	        public void mouseReleased(MouseEvent event) {
+	            jPanelMouseReleased(event);
+	        }
+	    });
+		
+	    canvasLabel.addMouseMotionListener(new MouseMotionAdapter() {
+	        public void mouseDragged(MouseEvent event) {
+	            jPanelMouseDragged(event);
+	        }
+	    });
+		
 		Box ToolsBox = Box.createVerticalBox();
+		panelDesign.add(ToolsBox, BorderLayout.EAST);
 		ToolsBox.setBorder(BorderFactory.createTitledBorder(" Tools "));
-		frmMapEditor.getContentPane().add(ToolsBox, BorderLayout.EAST);
 		
 		Box topologyBox = Box.createHorizontalBox();
 		topologyBox.setBorder(BorderFactory.createTitledBorder(" Topologies "));
@@ -253,6 +282,13 @@ public class MainUI {
 		JToggleButton btnEnvironment4 = new JToggleButton("");
 		EnvironmentBox.add(btnEnvironment4);
 		
+		Component rigidAreaEnvironEye = Box.createRigidArea(new Dimension(30, 10));
+		EnvironmentBox.add(rigidAreaEnvironEye);
+		
+		JToggleButton btnEnvironEye = new JToggleButton("");
+		makeImageButton(btnEnvironEye, "res/img/show.png", "EnvironEye");
+		EnvironmentBox.add(btnEnvironEye);
+		
 		Box RoadBox = Box.createHorizontalBox();
 		RoadBox.setBorder(BorderFactory.createTitledBorder(" Road "));
 		ToolsBox.add(RoadBox);
@@ -267,26 +303,68 @@ public class MainUI {
 		Component roadRigidArea_right = Box.createRigidArea(new Dimension(20, 10));
 		RoadBox.add(roadRigidArea_right);
 		
-		Box sliderBox = Box.createHorizontalBox();
-		sliderBox.setBorder(new TitledBorder(null, " Brush Size ", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		ToolsBox.add(sliderBox);
+		Component rigidAreaRoadEye = Box.createRigidArea(new Dimension(30, 10));
+		RoadBox.add(rigidAreaRoadEye);
+		
+		JToggleButton btnRoadEye = new JToggleButton("");
+		makeImageButton(btnRoadEye, "res/img/show.png", "RoadEye");
+		RoadBox.add(btnRoadEye);
+		
+		Component verticalStrut = Box.createVerticalStrut(50);
+		ToolsBox.add(verticalStrut);
+		
+		Box additionToolsBox = Box.createVerticalBox();
+		additionToolsBox.setBorder(new TitledBorder(null, " Addition Tools ", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		ToolsBox.add(additionToolsBox);
+		
+		Box horizontalBox = Box.createHorizontalBox();
+		horizontalBox.setBorder(new TitledBorder(null, " Brush Size ", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		additionToolsBox.add(horizontalBox);
 		
 		JSlider sliderValue = new JSlider();
-		sliderValue.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		sliderValue.setMinorTickSpacing(5);
 		sliderValue.setSnapToTicks(true);
+		sliderValue.setPreferredSize(new Dimension(80, 20));
 		sliderValue.setPaintTicks(true);
-		sliderValue.setPreferredSize(new Dimension(100, 20));
-		sliderBox.add(sliderValue);
+		sliderValue.setMinorTickSpacing(5);
+		horizontalBox.add(sliderValue);
 		
 		lblValue = new JLabel("50");
 		lblValue.setFont(new Font("Tahoma", Font.PLAIN, 12));
-		sliderBox.add(lblValue);
+		horizontalBox.add(lblValue);
 		
-	    drawCanvas();
+		JScrollPane previewPane = new JScrollPane();
+		previewPane.setBounds(new Rectangle(0, 0, 200, 200));
+		tabbedPane.addTab("Height Map Preview", null, previewPane, null);
+		
+		previewPanel = new JPanel(new GridBagLayout());
+		previewPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
+		previewPane.setViewportView(previewPanel);
+		
+		previewLabel = new JLabel(new ImageIcon(srcHeightMap));
+		previewPanel.add(previewLabel, null);
+		
+		drawCanvas();
 	    
 		/************************************************************************************************************/
 		/* EVENT HANDLER */	
+	    tabbedPane.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent arg0) {
+				int tabIndex = ((JTabbedPane)arg0.getSource()).getSelectedIndex();
+				if (tabIndex == 1) {
+					previewLabel.setIcon(new ImageIcon(srcHeightMap));
+					mainPanel.revalidate();
+					frmMapEditor.getContentPane().repaint();
+				}
+			}
+		});
+	    
+	    sliderValue.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent arg0) {
+				value = ((JSlider)arg0.getSource()).getValue();
+				lblValue.setText((int)value + "");
+			}
+		});
+		
 	    /**
 	     * le button LOAD : charger le fichier raw, l'agrandir et 
 	     */
@@ -302,6 +380,8 @@ public class MainUI {
                 
                 if (openFile.showOpenDialog(frmMapEditor) == JFileChooser.APPROVE_OPTION) {
                 	try {
+                		resetCanvas();
+                		
                 		selectingFile = openFile.getCurrentDirectory() + "\\" + openFile.getSelectedFile().getName().replace(".raw", ".png");
                 		ImageUtils.rawToPng(openFile.getSelectedFile().getAbsolutePath(), selectingFile);
 						
@@ -312,17 +392,7 @@ public class MainUI {
 						srcHeightMap = canvasHeightMap;
 						canvasHeightMap = ImageUtils.heightmapGrayScaleToInterface(canvasHeightMap);
 						
-						gTexture = canvasTexture.createGraphics();
-						gTexture.setColor(getColorTexture(0));
-						gTexture.fillRect(0, 0, canvasTexture.getWidth(), canvasTexture.getHeight());
-						
-						gMain = canvasMain.createGraphics();
-						gMain.drawImage(canvasTexture, 0, 0, null);
-						gMain.drawImage(canvasHeightMap, 0, 0, null);
-						
-						canvasLabel.setIcon(new ImageIcon(canvasMain));
-						mainPanel.revalidate();
-						frmMapEditor.getContentPane().repaint();
+						drawCanvas();
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
@@ -347,7 +417,6 @@ public class MainUI {
 						gTexture.drawImage(canvasTexture, 0, 0, null);
 						ImageIO.write(canvasTexture, "png", new File(saveFile.getSelectedFile().getAbsolutePath() + "_texture.png"));
 					} catch (IOException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
                 }                
@@ -382,27 +451,6 @@ public class MainUI {
 		/**
 		 * Détecter les utilisations du "mouse" 
 		 */
-		canvasLabel.addMouseListener(new MouseAdapter() {
-	        public void mousePressed(MouseEvent event) {
-	            jPanelMousePressed(event);
-	        }
-	        public void mouseReleased(MouseEvent event) {
-	            jPanelMouseReleased(event);
-	        }
-	    });
-		
-	    canvasLabel.addMouseMotionListener(new MouseMotionAdapter() {
-	        public void mouseDragged(MouseEvent event) {
-	            jPanelMouseDragged(event);
-	        }
-	    });
-	    
-	    sliderValue.addChangeListener(new ChangeListener() {
-			public void stateChanged(ChangeEvent arg0) {
-				value = ((JSlider)arg0.getSource()).getValue();
-				lblValue.setText((int)value + "");
-			}
-		});
 	}
 	
 	/**
@@ -436,7 +484,7 @@ public class MainUI {
 	    		
 		/* ZOOM IN - ZOOM OUT CODE */
 		/*
-		canvasLabel.setIcon(new ImageIcon(ImageUtils.resize(canvasMain, canvasMain.getWidth() / 2, canvasMain.getHeight() / 2, RenderingHints.VALUE_INTERPOLATION_BICUBIC)));
+		canvasLabel.setIcon(new ImageIcon(ImageUtils.resize(canvasMain, WIDTH / 2, HEIGHT / 2, RenderingHints.VALUE_INTERPOLATION_BICUBIC)));
 		mainPanel.revalidate();
 		*/
 	}
@@ -445,27 +493,27 @@ public class MainUI {
 	 * Re-initialiser les canvas pour une nouvelle carte
 	 */
 	public void resetCanvas() {
-		srcHeightMap = new BufferedImage(1024, 1024, BufferedImage.TYPE_INT_RGB);
+		srcHeightMap = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
 		
-		canvasMain = new BufferedImage(1024, 1024, BufferedImage.TYPE_INT_RGB);
-		canvasHeightMap = new BufferedImage(1024, 1024, BufferedImage.TYPE_INT_ARGB);
-		canvasTexture = new BufferedImage(1024, 1024, BufferedImage.TYPE_INT_RGB);
+		canvasMain = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
+		canvasHeightMap = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
+		canvasTexture = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
+		canvasRoad = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
 		
 		gHeightMap = canvasHeightMap.createGraphics();
 		gHeightMap.setColor(getColorTopo(0));
-		gHeightMap.fillRect(0, 0, canvasHeightMap.getWidth(), canvasHeightMap.getHeight());
+		gHeightMap.fillRect(0, 0, WIDTH, HEIGHT);
 		
 		srcHeightMap = canvasHeightMap;
 		try {
 			canvasHeightMap = ImageUtils.heightmapGrayScaleToInterface(canvasHeightMap);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
 		gTexture = canvasTexture.createGraphics();    
 		gTexture.setColor(getColorTexture(0));
-		gTexture.fillRect(0, 0, canvasTexture.getWidth(), canvasTexture.getHeight());
+		gTexture.fillRect(0, 0, WIDTH, HEIGHT);
 	}
 	
 	/**
@@ -486,23 +534,22 @@ public class MainUI {
 		if (updateX < 0) {
 			updateValueX += updateX;
 			updateX = 0;
-		} else if (updateX + updateValueX > srcHeightMap.getWidth()) {
-			updateValueX = srcHeightMap.getWidth() - updateX;
+		} else if (updateX + updateValueX > WIDTH) {
+			updateValueX = WIDTH - updateX;
 		}
 		
 		if (updateY < 0) {
 			updateValueY += updateY;
 			updateY = 0;
-		} else if (updateY + updateValueY > srcHeightMap.getHeight()) {
-			updateValueY = srcHeightMap.getHeight() - updateY;
+		} else if (updateY + updateValueY > HEIGHT) {
+			updateValueY = HEIGHT - updateY;
 		}
 		
 		if (tooltype == TOPOLOGY) {
 			canvasTmp = new BufferedImage((int)value, (int)value, BufferedImage.TYPE_INT_ARGB);
-			Graphics2D g2 = canvasTmp.createGraphics();
-	        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-	        g2.setPaint(getColorTopo(tool));
-	        g2.fillOval(0, 0, (int)value, (int)value);
+			gTmp = canvasTmp.createGraphics();
+			gTmp.setPaint(getColorTopo(tool));
+			gTmp.fillOval(0, 0, (int)value, (int)value);
 	        
 	        try {
 	        	canvasHeightMap = ImageUtils.updateHeightMapInterface(canvasHeightMap, canvasTmp, tool, 
@@ -514,10 +561,9 @@ public class MainUI {
 			}
 		} else if (tooltype == TEXTURE) {
 			canvasTmp = new BufferedImage((int)value, (int)value, BufferedImage.TYPE_INT_ARGB);
-			Graphics2D g2 = canvasTmp.createGraphics();
-	        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-	        g2.setPaint(getColorTexture(tool));
-            g2.fillOval(0, 0, (int)value, (int)value);
+			gTmp = canvasTmp.createGraphics();
+			gTmp.setPaint(getColorTexture(tool));
+			gTmp.fillOval(0, 0, (int)value, (int)value);
             
             try {
             	canvasTexture = ImageUtils.applyNewCanvas(canvasTexture, canvasTmp,
@@ -528,6 +574,18 @@ public class MainUI {
 		} else if (tooltype == ENVIRONMENT) {
 			
 		} else if (tooltype == ROAD) {
+			canvasTmp = new BufferedImage((int)value, (int)value, BufferedImage.TYPE_INT_ARGB);
+			gTmp = canvasTmp.createGraphics();
+			gTmp.setPaint(new Color(200, 0, 0));
+			gTmp.fillOval(0, 0, (int)value, (int)value);
+            
+            try {
+            	canvasRoad = ImageUtils.applyNewCanvas(canvasRoad, canvasTmp,
+            												updateX, updateY, updateValueX, updateValueY);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		} else if (tooltype == OBJECT) {
 			
 		}
 		
@@ -540,14 +598,14 @@ public class MainUI {
 	public void drawCanvas() {
 		gMain = canvasMain.createGraphics();
 		gMain.drawImage(canvasTexture, 0, 0, null);
-		gMain.drawImage(canvasRoad, 0, 0, null);
+		if (isShowRoad)			 gMain.drawImage(canvasRoad, 0, 0, null);
 		gMain.drawImage(canvasHeightMap, 0, 0, null);
-		gMain.drawImage(canvasEnvironment, 0, 0, null);
-		gMain.drawImage(canvasObject, 0, 0, null);
+		if (isShowEnvironment)	 gMain.drawImage(canvasEnvironment, 0, 0, null);
+		if (isShowObject)		 gMain.drawImage(canvasObject, 0, 0, null);
 		
 		canvasLabel.setIcon(new ImageIcon(canvasMain));
 		mainPanel.revalidate();
-        frmMapEditor.getContentPane().repaint();
+		frmMapEditor.getContentPane().repaint();
 	}
 	
 	/**
@@ -562,14 +620,29 @@ public class MainUI {
 		button.setSelectedIcon(new ImageIcon(src.replace(".", "selected.")));
 		button.setBorder(BorderFactory.createEmptyBorder());
 		button.setContentAreaFilled(false);
-		button.addActionListener(new ActionListener() {			 
-            public void actionPerformed(ActionEvent e)
-            {
-            	updateSelectedButton((JToggleButton)e.getSource());
-            	String btnName = ((JToggleButton)e.getSource()).getName();
-            	getTool(btnName);
-            }
-        });   
+		// Il y a seulement 1 bouton (outil) selectionné chaque fois
+		if (!button.getName().contains("Eye")) {
+			button.addActionListener(new ActionListener() {			 
+	            public void actionPerformed(ActionEvent e)
+	            {
+	            	updateSelectedButton((JToggleButton)e.getSource());
+	            	String btnName = ((JToggleButton)e.getSource()).getName();
+	            	getTool(btnName);
+	            }
+	        });
+		// Avec les boutons pour Affichage/Désaffichage des couches
+		} else {
+			button.addActionListener(new ActionListener() {			 
+	            public void actionPerformed(ActionEvent e)
+	            {	            	
+	            	String btnName = ((JToggleButton)e.getSource()).getName();
+	            	// Changer les variables pour affichage/deaffichage des couches
+	            	setShowHideLayer(btnName);
+	            	// Re-peintre l'ecran
+	            	drawCanvas();
+	            }
+	        });
+		}
 		
 		buttons.add(button);
 	}
@@ -629,6 +702,20 @@ public class MainUI {
 		} else if (name.equals("Road")) {
 			tooltype = ROAD;
 			tool = 1;
+		}
+	}
+	
+	/**
+	 * Affichage/Désaffichage des couches
+	 * @param name
+	 */
+	public void setShowHideLayer(String name) {
+		if (name.equals("EnvironEye")) {
+			isShowEnvironment = !isShowEnvironment;
+		} else if (name.equals("RoadEye")) {
+			isShowRoad = !isShowRoad;
+		} else if (name.equals("ObjectEye")) {
+			isShowObject = !isShowObject;
 		}
 	}
 	
