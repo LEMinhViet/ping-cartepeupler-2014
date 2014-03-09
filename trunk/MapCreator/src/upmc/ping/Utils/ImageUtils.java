@@ -7,17 +7,16 @@ import java.awt.GraphicsEnvironment;
 import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.WritableRaster;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Iterator;
 
-import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
-import javax.imageio.ImageWriteParam;
-import javax.imageio.ImageWriter;
-import javax.imageio.stream.FileImageOutputStream;
+
+import upmc.ping.app.Constants;
 
 public class ImageUtils {
 	/**
@@ -107,28 +106,6 @@ public class ImageUtils {
     }
 
     /**
-     * Garder le fichier JPEG dans l'ordinateur
-     * @param input : location 
-     * @param name : nom
-     * @throws IOException
-     */
-    public static void writeJPEG(BufferedImage input, String name) throws IOException {
-        Iterator<ImageWriter> iter = ImageIO.getImageWritersByFormatName("JPG");
-        if (iter.hasNext()) {
-            ImageWriter writer = (ImageWriter) iter.next();
-            ImageWriteParam iwp = writer.getDefaultWriteParam();
-            iwp.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-            iwp.setCompressionQuality(0.95f);
-            File outFile = new File(name);
-            FileImageOutputStream output = new FileImageOutputStream(outFile);
-            writer.setOutput(output);
-            IIOImage image = new IIOImage(input, null, null);
-            writer.write(null, image, iwp);
-            output.close();
-        }
-    }
-    
-    /**
      * Appliquer le canal "Alpha" d'un image sur l'autre 
      * @param image : l'image origin
      * @param mask : l'image contient le canal Alpha 
@@ -141,7 +118,7 @@ public class ImageUtils {
      */
     public static BufferedImage applyGrayscaleMaskToAlpha(BufferedImage image, BufferedImage mask, int x, int y, int width, int height) throws IOException {
         int[] imagePixels = image.getRGB(x, y, width, height, null, 0, width);
-        int[] maskPixels = mask.getRGB(0, 0, width, height, null, 0, width);
+        int[] maskPixels = mask.getRGB(mask.getWidth() - width, mask.getHeight() - height, width, height, null, 0, width);
 
         for (int i = 0; i < imagePixels.length; i++) {
             int color = imagePixels[i]; 
@@ -149,8 +126,7 @@ public class ImageUtils {
             imagePixels[i] = color & alpha;
         }
 
-        image.setRGB(0, 0, width, height, imagePixels, 0, width);
-//        ImageIO.write(image, "png", new File("res/hehe" + x + ".png"));
+        image.setRGB(mask.getWidth() - width, mask.getHeight() - height, width, height, imagePixels, 0, width);
         return image;
     }
     
@@ -211,20 +187,28 @@ public class ImageUtils {
      * @return
      * @throws IOException
      */
-    public static BufferedImage updateHeightMapInterface(BufferedImage srcImg, BufferedImage newImg, int topo, int x, int y, int width, int height) throws IOException {
-    	BufferedImage topology = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+    public static BufferedImage updateHeightMapInterface(BufferedImage srcImg, BufferedImage newImg, BufferedImage[] topology,
+    													int x, int y, int width, int height) throws IOException {
+    	int[] imagePixels = srcImg.getRGB(x, y, width, height, null, 0, width);
+        int[] newPixels = newImg.getRGB(x, y, width, height, null, 0, width);
+        int[][] topoPixels = new int[4][]; 
+        int pixel;
+        
+        for (int i = 0; i < topology.length; i++) {
+        	topoPixels[i] = topology[i].getRGB(x, y, width, height, null, 0, width);
+        }        
     	
-        int[] imagePixels = srcImg.getRGB(x, y, width, height, null, 0, width);
-    	topology = applyGrayscaleMaskToAlpha(ImageIO.read(new File("res/mask/topo" + topo + "mask.png")), newImg, x, y, width, height);
-    	int[] topoPixels = topology.getRGB(0, 0, width, height, null, 0, width);
-    	int[] newPixels = newImg.getRGB(0, 0, width, height, null, 0, width);
-    	
-       	for (int i = 0; i < topoPixels.length; i++) {          		
-    		if ((topoPixels[i] >> 24) > 0 || topoPixels[i] < 0) {
-    			imagePixels[i] = topoPixels[i];
-    		} else if ((newPixels[i] >> 24) > 0 || newPixels[i] < 0) {
-    			imagePixels[i] = 0;
-    		}       		
+       	for (int i = 0; i < imagePixels.length; i++) {      
+       		pixel = newPixels[i] & 0x000000FF;
+    		if (pixel <= 50) {
+    			imagePixels[i] = topoPixels[0][i];
+    		} else if (pixel <= 125) {
+    			imagePixels[i] = topoPixels[1][i];
+    		} else if (pixel <= 200) {
+    			imagePixels[i] = topoPixels[2][i];
+    		} else if (pixel <= 255) {
+    			imagePixels[i] = topoPixels[3][i];
+    		}
     	}
     	
        	srcImg.setRGB(x, y, width, height, imagePixels, 0, width);
@@ -242,20 +226,45 @@ public class ImageUtils {
      * @return		 : le nouveau heightmap
      * @throws IOException
      */
-    public static BufferedImage applyNewCanvas(BufferedImage srcImg, BufferedImage newImg, int x, int y, int width, int height) throws IOException {
+    public static BufferedImage applyNewCanvas(BufferedImage srcImg, BufferedImage newImg, int tool,
+    											int x, int y, int width, int height) throws IOException {
     	int[] imagePixels = srcImg.getRGB(x, y, width, height, null, 0, width);
-    	int[] newPixels = newImg.getRGB(0, 0, width, height, null, 0, width);
+    	int[] newPixels = newImg.getRGB(newImg.getWidth() - width, newImg.getHeight() - height, width, height, null, 0, width);
+    	int r, g, b;
     	
     	for (int i = 0; i < imagePixels.length; i++) {          		
     		if ((newPixels[i] >> 24) > 0 || newPixels[i] < 0) {
-    			imagePixels[i] = newPixels[i];
-    		}       		
+    			if (tool == Constants.TOPO_UP) {
+	    			r = Math.min((imagePixels[i] & 0x00FF0000) + (newPixels[i] & 0x00FF0000), 0x00FF0000);
+			    	g = Math.min((imagePixels[i] & 0x0000FF00) + (newPixels[i] & 0x0000FF00), 0x0000FF00);
+			    	b = Math.min((imagePixels[i] & 0x000000FF) + (newPixels[i] & 0x000000FF), 0x000000FF);
+    			} else { // TOPO_DOWN
+    				r = Math.max((imagePixels[i] & 0x00FF0000) - (newPixels[i] & 0x00FF0000), 0x00000000);
+			    	g = Math.max((imagePixels[i] & 0x0000FF00) - (newPixels[i] & 0x0000FF00), 0x00000000);
+			    	b = Math.max((imagePixels[i] & 0x000000FF) - (newPixels[i] & 0x000000FF), 0x00000000);
+    			}
+	    		imagePixels[i] = 0xFF000000 + r + g + b;
+    		} 
     	}
     	
        	srcImg.setRGB(x, y, width, height, imagePixels, 0, width);
-//       	ImageIO.write(srcImg, "png", new File("res/xor.png"));
     	return srcImg;
     }
+    
+    public static BufferedImage applyNewCanvas(BufferedImage srcImg, BufferedImage newImg,
+												int x, int y, int width, int height) throws IOException {
+		int[] imagePixels = srcImg.getRGB(x, y, width, height, null, 0, width);
+		int[] newPixels = newImg.getRGB(newImg.getWidth() - width, newImg.getHeight() - height, width, height, null, 0, width);
+	
+		for (int i = 0; i < imagePixels.length; i++) {          		
+			if ((newPixels[i] >> 24) > 0 || newPixels[i] < 0) {
+				imagePixels[i] = newPixels[i];
+			} 
+		}
+	
+		srcImg.setRGB(x, y, width, height, imagePixels, 0, width);
+		return srcImg;
+	}
     
     /**
      * Retirer la valeur maximal dans chaque niveau de l'hauteur
@@ -289,5 +298,12 @@ public class ImageUtils {
     	} else { // topology == 4
     		return 200 + 1; 
     	} 
+    }
+    
+    public static BufferedImage deepCopy(BufferedImage bi) {
+    	ColorModel cm = bi.getColorModel();
+    	boolean isAlphaPremultiplied = cm.isAlphaPremultiplied();
+    	WritableRaster raster = bi.copyData(null);
+    	return new BufferedImage(cm, raster, isAlphaPremultiplied, null);
     }
 }
