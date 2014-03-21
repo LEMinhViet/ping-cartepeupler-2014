@@ -65,9 +65,9 @@ public class MenuUI extends JMenuBar {
 		JSeparator separatorSave = new JSeparator();
 		mnFichier.add(separatorSave);
 		
-		mntmSave = new JMenuItem("Save");
-		mntmSave.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
-		mnFichier.add(mntmSave);
+//		mntmSave = new JMenuItem("Save");
+//		mntmSave.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
+//		mnFichier.add(mntmSave);
 		
 		mntmSaveAs = new JMenuItem("Save As...");
 		mntmSaveAs.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK | InputEvent.SHIFT_MASK));
@@ -152,7 +152,13 @@ public class MenuUI extends JMenuBar {
     					} catch (IOException e) {
     						e.printStackTrace();
     					}
-                	}                	
+                	} else { // Save by Default
+                		try {
+    						mainPanel.saveDefault(saveFile.getSelectedFile().getAbsolutePath(), result);
+    					} catch (IOException e) {
+    						e.printStackTrace();
+    					}
+                	}
                 }                
 			}
 		});

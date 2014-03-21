@@ -7,6 +7,9 @@ import java.awt.GridBagLayout;
 import java.awt.Paint;
 import java.awt.RadialGradientPaint;
 import java.awt.Rectangle;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.awt.geom.Point2D;
 import java.io.IOException;
 
@@ -14,6 +17,7 @@ import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
@@ -74,7 +78,20 @@ public class MainUI {
 		frmMapEditor = new JFrame();
 		frmMapEditor.setTitle("Map Editor");
 		frmMapEditor.setBounds(100, 100, 800, 600);
-		frmMapEditor.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		WindowListener exitListener = new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                int confirm = JOptionPane.showOptionDialog(frmMapEditor,
+                        "Are You Sure to Close this Application?",
+                        "Exit Confirmation", JOptionPane.YES_NO_OPTION,
+                        JOptionPane.QUESTION_MESSAGE, null, null, null);
+                if (confirm == JOptionPane.YES_OPTION) {
+                    System.exit(1);
+                }
+            }
+        };
+        frmMapEditor.addWindowListener(exitListener);
+        frmMapEditor.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmMapEditor.getContentPane().setLayout(new BorderLayout(0, 0));
 		
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
@@ -163,15 +180,27 @@ public class MainUI {
 	public Color getColorTexture(int tool) {
 		Color color;
 		if (tool == 1) {
-			color = new Color(209, 193, 160);
+			color = new Color(48, 47, 50);
 		} else if (tool == 2) {
-			color = new Color(86, 120, 8);
+			color = new Color(125, 132, 39);
 		} else if (tool == 3) {
-			color = new Color(132, 109, 78);
-		} else { // if (tool == 4) {
 			color = new Color(116, 107, 90);
+		} else { // if (tool == 4) {
+			color = new Color(168, 171, 164);
 		}		
 		return color;
+	}
+	
+	public String getNameTexture(int tool) {
+		if (tool == 1) {
+			return "graviers01";
+		} else if (tool == 2) {
+			return "herbe03";
+		} else if (tool == 3) {
+			return "terre01";
+		} else { // if (tool == 4) {
+			return "rock01";
+		}		
 	}
 	
 	public MainPanel getMainPanel() {

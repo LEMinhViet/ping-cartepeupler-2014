@@ -139,12 +139,6 @@ public class MainPanel extends JPanel {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	    
-		/* ZOOM IN - ZOOM OUT CODE */
-		/*
-		canvasLabel.setIcon(new ImageIcon(ImageUtils.resize(canvasMain, WIDTH / 2, HEIGHT / 2, RenderingHints.VALUE_INTERPOLATION_BICUBIC)));
-		mainPanel.revalidate();
-		*/
 	}
 	
 	/**
@@ -352,11 +346,81 @@ public class MainPanel extends JPanel {
 	
 	public void saveJME3SDK(String path, int result) throws IOException {
 		ImageIO.write(srcHeightMap, "png", new File(path + "_heightmap.png"));
-		gTexture = canvasTexture.createGraphics();
-		gTexture.drawImage(canvasTexture, 0, 0, null);
+//		gTexture = canvasTexture.createGraphics();
+//		gTexture.drawImage(canvasTexture, 0, 0, null);
+		saveTexture(path);
+		saveObjects(path);
+		saveRoad(path);
 		ImageIO.write(canvasTexture, "png", new File(path + "_texture.png"));
 		if (result > SaveTypeDialog.JME3SDK * 2) {
 			ImageIO.write(canvasMain, "png", new File(path + "_minimap.png"));
+		}
+	}
+	
+	public void saveDefault(String path, int result) throws IOException {
+		ImageIO.write(srcHeightMap, "png", new File(path + "_heightmap.png"));
+		saveTexture(path);
+		saveObjects(path);
+		saveRoad(path);
+		if (result > SaveTypeDialog.PING * 2) {
+			ImageIO.write(canvasMain, "png", new File(path + "_minimap.png"));
+		}
+	}
+	
+	public void saveObjects(String path) {
+		new File(path).mkdir();
+		for (Object obj : treeList) 		obj.save(path, "tree", "backup", "trees/trees-02.jmex", 0.0, "3", 0.0);
+		for (Object obj : rockList)			obj.save(path, "rock", "backup", "rock/rock-02.jmex", 0.0, "4", 0.0);
+		for (Object obj : bulldozerList) 	obj.save(path, "bulldozer", "backup", "bulldozer/bulldozer-02.jmex", 0.0, "5", 0.0);
+		for (Object obj : sawList) 			obj.save(path, "saw", "backup", "saw/saw-02.jmex", 0.0, "6", 0.0);
+		for (Object obj : axeList) 			obj.save(path, "axe", "backup", "axe/axe-02.jmex", 0.0, "7", 0.0);
+		for (Object obj : boatList) 		obj.save(path, "boat", "backup", "boat/boat-02.jmex", 0.0, "8", 0.0);
+		for (Object obj : houseList) 		obj.save(path, "house", "backup", "house/house-02.jmex", 0.0, "9", 0.0);
+		for (Object obj : teleportList) 	obj.save(path, "teleport", "backup", "teleport/teleport-02.jmex", 0.0, "10", 0.0);
+		for (Object obj : horseList) 		obj.save(path, "horse", "backup", "horse/horse-02.jmex", 0.0, "11", 0.0);
+	}
+	
+	public void saveTexture(String path) {
+		int[] imagePixels = canvasTexture.getRGB(0, 0, WIDTH, HEIGHT, null, 0, WIDTH);
+		int[][] texturePixels = new int[4][WIDTH * HEIGHT]; 
+		BufferedImage texture = new BufferedImage(WIDTH, WIDTH, BufferedImage.TYPE_INT_ARGB);
+		
+		for (int i = 0; i < imagePixels.length; i++) {
+			for (int j = 0; j < 4; j++) {
+				Color checkColor = mainUI.getColorTexture(j + 1);
+				if (checkColor.getRGB() == imagePixels[i]) {
+					texturePixels[j][i] = 0xffffffff;
+				} else {
+					texturePixels[j][i] = 0x00000000;
+				}
+			}
+		}	
+		
+		for (int i = 0; i < 4; i++) {
+			texture.setRGB(0, 0, WIDTH, HEIGHT, texturePixels[i], 0, WIDTH);
+			try {
+				ImageIO.write(texture, "png", new File(path + "-" + mainUI.getNameTexture(i + 1) + ".png"));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public void saveRoad(String path) {
+		int[] imagePixels = canvasRoad.getRGB(0, 0, WIDTH, HEIGHT, null, 0, WIDTH);
+		BufferedImage texture = new BufferedImage(WIDTH, WIDTH, BufferedImage.TYPE_INT_ARGB);
+		
+		for (int i = 0; i < imagePixels.length; i++) {
+			if (imagePixels[i] != 0x00000000) {
+				imagePixels[i] = 0xffffffff;
+			} 		
+		}	
+		
+		texture.setRGB(0, 0, WIDTH, HEIGHT, imagePixels, 0, WIDTH);
+		try {
+			ImageIO.write(texture, "png", new File(path + "-road.png"));
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 	

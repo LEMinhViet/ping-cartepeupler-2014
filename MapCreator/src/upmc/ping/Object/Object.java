@@ -5,7 +5,10 @@ import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 
+import upmc.ping.Utils.XMLUtils;
+
 public class Object {
+	// Position top-left
 	private int x; 
 	private int y;
 	private int size;
@@ -30,6 +33,19 @@ public class Object {
 		return new Rectangle(x - width / 2,  y - height / 2, width, height).contains(posX, posY);
 	}
 	
+	/**
+	 * 
+	 * @param path
+	 * @param tag
+	 * @param model
+	 * @param ry
+	 * @param version
+	 * @param y3D : x dans cette classe = x in 3D - y dans cette classe = z in 3D
+	 */
+	public void save(String path, String name, String tag, String model, double ry, String version, double y3D) {
+		XMLUtils.writeXMLObject(path, name, tag, model, ry, version, x, y3D, y);
+	}
+	
 	public int getX() {
 		return x;
 	}
@@ -44,5 +60,5 @@ public class Object {
 	
 	public int getCenterY() {
 		return y - size / 2;
-	}
+	} 
 }
