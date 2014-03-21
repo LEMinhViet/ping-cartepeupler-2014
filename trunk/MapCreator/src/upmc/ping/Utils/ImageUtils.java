@@ -300,6 +300,11 @@ public class ImageUtils {
     	} 
     }
     
+    /**
+     * Copier l'un BufferedImage à l'autre
+     * @param bi : l'image qui va etre copie
+     * @return - un autre image 
+     */
     public static BufferedImage deepCopy(BufferedImage bi) {
     	ColorModel cm = bi.getColorModel();
     	boolean isAlphaPremultiplied = cm.isAlphaPremultiplied();

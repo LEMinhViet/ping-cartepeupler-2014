@@ -73,33 +73,49 @@ public class ToolBoxUI extends Box {
 		Component rigidAreaTopo2 = Box.createRigidArea(new Dimension(10, 10));
 		topologyBox.add(rigidAreaTopo2);
 		
+		Box HeightBox = Box.createHorizontalBox();
+		HeightBox.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), " Height / Weight ", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		topologyBox.add(HeightBox);
+
+		sliderHeight = new JSlider();
+		sliderHeight.setMinimum(2);
+		sliderHeight.setSnapToTicks(true);
+		sliderHeight.setPreferredSize(new Dimension(80, 20));
+		sliderHeight.setPaintTicks(true);
+		sliderHeight.setMinorTickSpacing(5);
+		HeightBox.add(sliderHeight);
+		
+		lblHeight = new JLabel("50");
+		lblHeight.setFont(new Font("Tahoma", Font.PLAIN, 12));
+		HeightBox.add(lblHeight);
+		
 		Box TextureBox = Box.createHorizontalBox();
 		TextureBox.setBorder(BorderFactory.createTitledBorder(" Textures "));
 		add(TextureBox);
 		
 		JToggleButton btnTexture1 = new JToggleButton("");
-		makeImageButton(btnTexture1, "res/img/sable05_ico.jpg", "Texture1");
+		makeImageButton(btnTexture1, "res/img/graviers01_ico.jpg", "Texture1");
 		TextureBox.add(btnTexture1);
 		
 		Component rigidAreaTexture1 = Box.createRigidArea(new Dimension(10, 10));
 		TextureBox.add(rigidAreaTexture1);
 		
 		JToggleButton btnTexture2 = new JToggleButton("");
-		makeImageButton(btnTexture2, "res/img/nicegrass_ico.jpg", "Texture2");
+		makeImageButton(btnTexture2, "res/img/herbe03_ico.jpg", "Texture2");
 		TextureBox.add(btnTexture2);
 		
 		Component rigidAreaTexture2 = Box.createRigidArea(new Dimension(10, 10));
 		TextureBox.add(rigidAreaTexture2);
 		
 		JToggleButton btnTexture3 = new JToggleButton("");
-		makeImageButton(btnTexture3, "res/img/baserock_ico.jpg", "Texture3");
+		makeImageButton(btnTexture3, "res/img/terre01_ico.jpg", "Texture3");
 		TextureBox.add(btnTexture3);
 		
 		Component rigidAreaTexture3 = Box.createRigidArea(new Dimension(10, 10));
 		TextureBox.add(rigidAreaTexture3);
 		
 		JToggleButton btnTexture4 = new JToggleButton("");
-		makeImageButton(btnTexture4, "res/img/terre01_ico.jpg", "Texture4");
+		makeImageButton(btnTexture4, "res/img/rock01_ico.jpg", "Texture4");
 		TextureBox.add(btnTexture4);
 		
 		Box EnvironmentBox = Box.createHorizontalBox();
@@ -214,7 +230,7 @@ public class ToolBoxUI extends Box {
 		additionToolsBox.add(BrushSizeBox);
 		
 		sliderValue = new JSlider();
-		sliderValue.setMinimum(1);
+		sliderValue.setMinimum(2);
 		sliderValue.setSnapToTicks(true);
 		sliderValue.setPreferredSize(new Dimension(80, 20));
 		sliderValue.setPaintTicks(true);
@@ -225,28 +241,12 @@ public class ToolBoxUI extends Box {
 		lblValue.setFont(new Font("Tahoma", Font.PLAIN, 12));
 		BrushSizeBox.add(lblValue);
 		
-		Box HeightBox = Box.createHorizontalBox();
-		HeightBox.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), " Height / Weight (Topologies)", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		additionToolsBox.add(HeightBox);
-
-		sliderHeight = new JSlider();
-		sliderHeight.setMinimum(1);
-		sliderHeight.setSnapToTicks(true);
-		sliderHeight.setPreferredSize(new Dimension(80, 20));
-		sliderHeight.setPaintTicks(true);
-		sliderHeight.setMinorTickSpacing(5);
-		HeightBox.add(sliderHeight);
-		
-		lblHeight = new JLabel("50");
-		lblHeight.setFont(new Font("Tahoma", Font.PLAIN, 12));
-		HeightBox.add(lblHeight);
-		
 		Box DensityBox = Box.createHorizontalBox();
 		DensityBox.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), " Density (Rock & Tree)", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 		additionToolsBox.add(DensityBox);
 		
 		sliderDensity = new JSlider();
-		sliderDensity.setMinimum(1);
+		sliderDensity.setMinimum(2);
 		sliderDensity.setSnapToTicks(true);
 		sliderDensity.setPreferredSize(new Dimension(80, 20));
 		sliderDensity.setPaintTicks(true);

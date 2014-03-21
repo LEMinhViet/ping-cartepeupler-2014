@@ -51,7 +51,7 @@ public class ObjectList extends ArrayList<Object> {
 				startY = y + (j - 1) * size / 2;
 				numberAdd = 1 - boundRect_Object(startX, startY, size / 2);
 				for (int add = 0; add < numberAdd; add++) {
-					if (random.nextDouble() < (double)density / 200) {
+					if (random.nextDouble() < (double)density * size / 200 / 200) {
 						if (!add(new Object(startX + random.nextInt(size / 2), 
 											startY + random.nextInt(size / 2), getSize()), 
 								true, false)) {
