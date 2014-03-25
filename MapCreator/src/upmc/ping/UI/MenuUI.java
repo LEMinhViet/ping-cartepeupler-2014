@@ -185,6 +185,43 @@ public class MenuUI extends JMenuBar {
 			}
 		});
 		
+		
+		/**
+		 * About
+		 */
+		mntmAbout.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				JOptionPane.showMessageDialog(mainUI.getFrame(), 
+						"Version 1.0", 
+						"About", 
+						JOptionPane.INFORMATION_MESSAGE);
+
+			}
+		});
+		
+		/**
+		 * Help
+		 */
+		mntmHelp.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				JOptionPane.showMessageDialog(mainUI.getFrame(), 
+						"Fonctionnalités :\n"
+						+"1. Affichage de la heightmap\n"
+						+"2. Affichage des textures disponibles\n"
+						+"3. Créer une nouvelle heightmap\n"
+						+"4. Modification des textures\n"
+						+"5. Ajout des chemins (en rouge)\n"
+						+"6. Ajout des objets\n"
+						+"7. Affichage/Désaffichage des couches d’objets\n"
+						+"8. Exportation\n",
+						"Help", 
+						JOptionPane.INFORMATION_MESSAGE);
+
+			}
+		});
+
+		
+		
 		/**
 		 * Creer une nouvelle carte
 		 */
